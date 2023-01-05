@@ -21,5 +21,6 @@ shared_scripts {
 }
 
 dependency 'rsg-core'
+dependency 'rsg-horses'
 
 lua54 'yes'
