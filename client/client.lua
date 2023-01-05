@@ -3,6 +3,7 @@ local isLoggedIn = false
 local walking = false
 local leading = false
 local playerjob = nil
+local CurrentHorse = nil
 
 -----------------------------------------------------------------------------------
 
@@ -19,6 +20,13 @@ end)
 
 RegisterNetEvent('RSGCore:Client:OnJobUpdate', function(JobInfo)
     PlayerData.job = JobInfo
+end)
+
+-----------------------------------------------------------------------------------
+
+-- get spawned horse
+RegisterNetEvent('rsg-horsetrainer:client:spawnedHorse',function(SpawnedHorse)
+    CurrentHorse = SpawnedHorse
 end)
 
 -----------------------------------------------------------------------------------
