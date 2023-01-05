@@ -58,7 +58,7 @@ RegisterNetEvent('rsg-horsetrainer:client:updateLeadingXP',function()
         if horsexp <= Config.FullyTrained then
             local newxp = horsexp + Config.LeadingXpIncrease
             TriggerServerEvent('rsg-horsetrainer:server:updateXP', newxp, activehorse)
-		end
+        end
     end)
 end)
 

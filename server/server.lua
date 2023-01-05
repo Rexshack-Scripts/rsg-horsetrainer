@@ -21,6 +21,6 @@ RegisterNetEvent('rsg-horsetrainer:server:updateXP', function(newxp, activehorse
     local src = source
     if activehorse ~= nil then
         MySQL.update('UPDATE player_horses SET horsexp = ?  WHERE horseid = ? AND active = ?', {newxp, activehorse, 1})
-        TriggerClientEvent('RSGCore:Notify', src, 'horse xp now '..newxp, 'success')
+        TriggerClientEvent('RSGCore:Notify', src, Lang:t('success.xp_now')..newxp, 'success')
     end
 end)
