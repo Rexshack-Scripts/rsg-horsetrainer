@@ -41,7 +41,7 @@ CreateThread(function()
             if walking == true and leading == true then
                 Wait(Config.LeadingXpTime)
                 print('xp increase trigger')
-                TriggerEvent('rsg-horsetrainer:client:updateLedingXP')
+                TriggerEvent('rsg-horsetrainer:client:updateLeadingXP')
             end
         end
     end
@@ -50,7 +50,7 @@ end)
 -------------------------------------------------------------------------------
 
 -- update xp by leading horse
-RegisterNetEvent('rsg-horsetrainer:client:updateLedingXP',function()
+RegisterNetEvent('rsg-horsetrainer:client:updateLeadingXP',function()
     RSGCore.Functions.TriggerCallback('rsg-horsetrainer:server:GetActiveHorse', function(data)
         local ped = PlayerPedId()
         local activehorse = data.horseid
