@@ -8,31 +8,39 @@ local feedcooldownSecondsRemaining = 0
 
 -------------------------------------------------------------------------------
 
+AddEventHandler('RSGCore:Client:OnPlayerLoaded', function() -- Don't use this with the native method
+    isLoggedIn = true
+    playerjob = RSGCore.Functions.GetPlayerData().job.name
+end)
+
+RegisterNetEvent('RSGCore:Client:OnPlayerUnload', function() -- Don't use this with the native method
+    isLoggedIn = false
+end)
+
+-------------------------------------------------------------------------------
+
 -- leading horse for xp
 CreateThread(function()
-	if LocalPlayer.state['isLoggedIn'] then
-		local playerjob = RSGCore.Functions.GetPlayerData().job.name
-		while true do
-			Wait(1000)
-			if playerjob == 'horsetrainer' then
-				if Citizen.InvokeNative(0xDE4C184B2B9B071A, PlayerPedId()) then    -- walking
-					walking = true
-				else
-					walking = false
-				end
-				if Citizen.InvokeNative(0xEFC4303DDC6E60D3, PlayerPedId()) then -- leading
-					leading = true
-				else
-					leading = false
-				end
-				if walking == true and leading == true then
-					Wait(Config.LeadingXpTime)
-					print('xp increase trigger')
-					TriggerServerEvent('rsg-horsetrainer:server:updatexp', 'leading')
-				end
-			end
-		end
-	end
+    while true do
+        Wait(1000)
+        if LocalPlayer.state['isLoggedIn'] and playerjob == 'horsetrainer' then
+
+            if Citizen.InvokeNative(0xDE4C184B2B9B071A, PlayerPedId()) then    -- walking
+                walking = true
+            else
+                walking = false
+            end
+            if Citizen.InvokeNative(0xEFC4303DDC6E60D3, PlayerPedId()) then -- leading
+                leading = true
+            else
+                leading = false
+            end
+            if walking == true and leading == true then
+                Wait(Config.LeadingXpTime)
+                TriggerServerEvent('rsg-horsetrainer:server:updatexp', 'leading')
+            end
+        end
+    end
 end)
 
 -------------------------------------------------------------------------------
