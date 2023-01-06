@@ -1,6 +1,10 @@
 local Translations = {
     error = {
-		--var = 'text goes here',
+		horse_brush_needed = 'horse trainer brush needed for this',
+		not_horse_trainer = 'you are not a horse trainer!',
+		horse_too_clean = 'horse is too clean right now!',
+		carrot_needed = 'carrot needed for this',
+		horse_too_full = 'horse is too full right now!',
     },
     success = {
 		xp_now = 'horse xp now',
@@ -24,4 +28,4 @@ Lang = Locale:new({
     warnOnMissing = true
 })
 
--- Lang:t('success.xp_now')
+-- Lang:t('error.horse_too_full')

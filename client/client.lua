@@ -63,13 +63,13 @@ RegisterNetEvent('rsg-horsetrainer:client:brushHorse',function(item)
                 TriggerServerEvent('rsg-horsetrainer:server:updatexp', 'cleaning')
                 handlecleanCooldown()
             else
-                RSGCore.Functions.Notify('horse trainer brush needed for this', 'error')
+                RSGCore.Functions.Notify(Lang:t('error.horse_brush_needed'), 'error')
             end
         else
-            RSGCore.Functions.Notify('you are not a horse trainer!', 'error')
+            RSGCore.Functions.Notify(Lang:t('error.not_horse_trainer'), 'error')
         end
     else
-        RSGCore.Functions.Notify('horse is too clean right now!', 'error')
+        RSGCore.Functions.Notify(Lang:t('error.horse_too_clean'), 'error')
     end
 end)
 
@@ -89,13 +89,13 @@ RegisterNetEvent('rsg-horsetrainer:client:feedHorse',function(item)
                 TriggerServerEvent('rsg-horsetrainer:server:deleteItem', item, 1)
                 handlefeedCooldown()
             else
-                RSGCore.Functions.Notify('carrot needed for this', 'error')
+                RSGCore.Functions.Notify(Lang:t('error.carrot_needed'), 'error')
             end
         else
-            RSGCore.Functions.Notify('you are not a horse trainer!', 'error')
+            RSGCore.Functions.Notify(Lang:t('error.not_horse_trainer'), 'error')
         end
     else
-        RSGCore.Functions.Notify('horse is too full right now!', 'error')
+        RSGCore.Functions.Notify(Lang:t('error.horse_too_full'), 'error')
     end
 end)
 
