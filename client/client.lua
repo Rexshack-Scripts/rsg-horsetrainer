@@ -130,3 +130,20 @@ RegisterNetEvent('rsg-horsetrainer:client:feedHorse',function(item)
     end
 end)
 
+-------------------------------------------------------------------------------
+
+RegisterNetEvent('rsg-horsetrainer:client:OpenTrainerShop')
+AddEventHandler('rsg-horsetrainer:client:OpenTrainerShop', function()
+    local playerjob = RSGCore.Functions.GetPlayerData().job.name
+    if playerjob == 'horsetrainer' then
+        local ShopItems = {}
+        ShopItems.label = "Horse Trainer Shop"
+        ShopItems.items = Config.TrainerShop
+        ShopItems.slots = #Config.TrainerShop
+        TriggerServerEvent("inventory:server:OpenInventory", "shop", "TrainerShop_"..math.random(1, 99), ShopItems)
+    else
+        RSGCore.Functions.Notify(Lang:t('error.not_horse_trainer'), 'error')
+    end
+end)
+
+-------------------------------------------------------------------------------
