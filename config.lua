@@ -1,5 +1,7 @@
 Config = {}
 
+Config.Debug = false
+
 -- settings
 ------------------------------------------------------------------------------------
 Config.FullyTrained = 5000 -- anything above 100 is overpower stamina and health

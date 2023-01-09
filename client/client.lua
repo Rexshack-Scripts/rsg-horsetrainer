@@ -10,7 +10,6 @@ local feedcooldownSecondsRemaining = 0
 
 AddEventHandler('RSGCore:Client:OnPlayerLoaded', function() -- Don't use this with the native method
     isLoggedIn = true
-    playerjob = RSGCore.Functions.GetPlayerData().job.name
 end)
 
 RegisterNetEvent('RSGCore:Client:OnPlayerUnload', function() -- Don't use this with the native method
@@ -19,25 +18,57 @@ end)
 
 -------------------------------------------------------------------------------
 
+-- cleaning cooldown timer
+function handlecleanCooldown()
+    cleancooldownSecondsRemaining = (Config.HorseCleanCooldown * 60)
+    Citizen.CreateThread(function()
+        while cleancooldownSecondsRemaining > 0 do
+            Wait(1000)
+            cleancooldownSecondsRemaining = cleancooldownSecondsRemaining - 1
+            if Config.Debug == true then
+                print(cleancooldownSecondsRemaining)
+            end
+        end
+    end)
+end
+
+-- feeding cooldown timer
+function handlefeedCooldown()
+    feedcooldownSecondsRemaining = (Config.HorseFeedCooldown * 60)
+    Citizen.CreateThread(function()
+        while feedcooldownSecondsRemaining > 0 do
+            Wait(1000)
+            feedcooldownSecondsRemaining = feedcooldownSecondsRemaining - 1
+            if Config.Debug == true then
+                print(feedcooldownSecondsRemaining)
+            end
+        end
+    end)
+end
+
+-------------------------------------------------------------------------------
+
 -- leading horse for xp
 CreateThread(function()
     while true do
         Wait(1000)
-        if LocalPlayer.state['isLoggedIn'] and playerjob == 'horsetrainer' then
-
-            if Citizen.InvokeNative(0xDE4C184B2B9B071A, PlayerPedId()) then    -- walking
-                walking = true
-            else
-                walking = false
-            end
-            if Citizen.InvokeNative(0xEFC4303DDC6E60D3, PlayerPedId()) then -- leading
-                leading = true
-            else
-                leading = false
-            end
-            if walking == true and leading == true then
-                Wait(Config.LeadingXpTime)
-                TriggerServerEvent('rsg-horsetrainer:server:updatexp', 'leading')
+        if LocalPlayer.state['isLoggedIn'] then
+            local playerjob = RSGCore.Functions.GetPlayerData().job.name
+            if playerjob == 'horsetrainer' then
+                if Citizen.InvokeNative(0xDE4C184B2B9B071A, PlayerPedId()) then    -- walking
+                    walking = true
+                else
+                    walking = false
+                end
+                if Citizen.InvokeNative(0xEFC4303DDC6E60D3, PlayerPedId()) then -- leading
+                    leading = true
+                else
+                    leading = false
+                end
+                if walking == true and leading == true then
+                    Wait(Config.LeadingXpTime)
+                    TriggerServerEvent('rsg-horsetrainer:server:updatexp', 'leading')
+                end
             end
         end
     end
@@ -99,28 +130,3 @@ RegisterNetEvent('rsg-horsetrainer:client:feedHorse',function(item)
     end
 end)
 
--------------------------------------------------------------------------------
-
--- cleaning cooldown timer
-function handlecleanCooldown()
-    cleancooldownSecondsRemaining = (Config.HorseCleanCooldown * 60 * 1000)
-    Citizen.CreateThread(function()
-        while cleancooldownSecondsRemaining > 0 do
-            Wait(1000)
-            cleancooldownSecondsRemaining = cleancooldownSecondsRemaining - 1
-        end
-    end)
-end
-
--- feeding cooldown timer
-function handlefeedCooldown()
-    feedcooldownSecondsRemaining = (Config.HorseFeedCooldown * 60 * 1000)
-    Citizen.CreateThread(function()
-        while feedcooldownSecondsRemaining > 0 do
-            Wait(1000)
-            feedcooldownSecondsRemaining = feedcooldownSecondsRemaining - 1
-        end
-    end)
-end
-
--------------------------------------------------------------------------------
