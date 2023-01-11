@@ -1,31 +1,35 @@
 local RSGCore = exports['rsg-core']:GetCoreObject()
-local isLoggedIn = false
 local walking = false
 local leading = false
 local playerjob = nil
 local cleancooldownSecondsRemaining = 0
 local feedcooldownSecondsRemaining = 0
+local horseEXP = 0
+local maxedEXP = false
+local horsePed = 0
+local horseName = nil
 
--------------------------------------------------------------------------------
+-- Check horse EXP
+local function CheckEXP()
+    RSGCore.Functions.TriggerCallback('rsg-horses:server:GetActiveHorse', function(data)
+        horseEXP = data.horsexp
+    end)
 
-AddEventHandler('RSGCore:Client:OnPlayerLoaded', function() -- Don't use this with the native method
-    isLoggedIn = true
-end)
-
-RegisterNetEvent('RSGCore:Client:OnPlayerUnload', function() -- Don't use this with the native method
-    isLoggedIn = false
-end)
+    maxedEXP = false
+end
 
 -------------------------------------------------------------------------------
 
 -- cleaning cooldown timer
-function handlecleanCooldown()
+local function CleaningCooldown()
     cleancooldownSecondsRemaining = (Config.HorseCleanCooldown * 60)
+
     Citizen.CreateThread(function()
         while cleancooldownSecondsRemaining > 0 do
             Wait(1000)
             cleancooldownSecondsRemaining = cleancooldownSecondsRemaining - 1
-            if Config.Debug == true then
+
+            if Config.Debug then
                 print(cleancooldownSecondsRemaining)
             end
         end
@@ -33,13 +37,15 @@ function handlecleanCooldown()
 end
 
 -- feeding cooldown timer
-function handlefeedCooldown()
+local function FeedingCooldown()
     feedcooldownSecondsRemaining = (Config.HorseFeedCooldown * 60)
+
     Citizen.CreateThread(function()
         while feedcooldownSecondsRemaining > 0 do
             Wait(1000)
             feedcooldownSecondsRemaining = feedcooldownSecondsRemaining - 1
-            if Config.Debug == true then
+
+            if Config.Debug then
                 print(feedcooldownSecondsRemaining)
             end
         end
@@ -52,98 +58,198 @@ end
 CreateThread(function()
     while true do
         Wait(1000)
-        if LocalPlayer.state['isLoggedIn'] then
-            local playerjob = RSGCore.Functions.GetPlayerData().job.name
-            if playerjob == 'horsetrainer' then
-                if Citizen.InvokeNative(0xDE4C184B2B9B071A, PlayerPedId()) then    -- walking
-                    walking = true
-                else
-                    walking = false
-                end
-                if Citizen.InvokeNative(0xEFC4303DDC6E60D3, PlayerPedId()) then -- leading
-                    leading = true
-                else
-                    leading = false
-                end
-                if walking == true and leading == true then
-                    Wait(Config.LeadingXpTime)
-                    TriggerServerEvent('rsg-horsetrainer:server:updatexp', 'leading')
-                end
-            end
+
+        if not LocalPlayer.state.isLoggedIn then goto continue end
+
+        playerjob = RSGCore.Functions.GetPlayerData().job.name
+
+        if playerjob ~= 'horsetrainer' then goto continue end
+
+        if Citizen.InvokeNative(0xDE4C184B2B9B071A, PlayerPedId()) then -- walking
+            walking = true
         end
+
+        if Citizen.InvokeNative(0xEFC4303DDC6E60D3, PlayerPedId()) then -- leading
+            leading = true
+        end
+
+        CheckEXP()
+
+        if horseEXP >= 5000 then
+            maxedEXP = true
+        end
+
+        if maxedEXP then goto continue end
+
+        if walking and leading then
+            Wait(Config.LeadingXpTime)
+            TriggerServerEvent('rsg-horsetrainer:server:updatexp', 'leading')
+        end
+
+        ::continue::
     end
 end)
 
 -------------------------------------------------------------------------------
 
 -- brush horse for xp
-RegisterNetEvent('rsg-horsetrainer:client:brushHorse',function(item)
-    local playerjob = RSGCore.Functions.GetPlayerData().job.name
-    if cleancooldownSecondsRemaining == 0 then
-        if playerjob == 'horsetrainer' then
-            local hasItem = RSGCore.Functions.HasItem('horsetrainingbrush', 1)
-            if hasItem then
-                local horsePed = Citizen.InvokeNative(0xE7E11B8DCBED1058, PlayerPedId())
-                Citizen.InvokeNative(0xCD181A959CFDD7F4, PlayerPedId(), horsePed, `INTERACTION_BRUSH`, 0, 0)
-                Wait(8000)
-                Citizen.InvokeNative(0xE3144B932DFDFF65, horsePed, 0.0, -1, 1, 1)
-                ClearPedEnvDirt(horsePed)
-                ClearPedDamageDecalByZone(horsePed, 10, "ALL")
-                ClearPedBloodDamage(horsePed)
-                PlaySoundFrontend("Core_Fill_Up", "Consumption_Sounds", true, 0)
-                TriggerServerEvent('rsg-horsetrainer:server:updatexp', 'cleaning')
-                handlecleanCooldown()
-            else
-                RSGCore.Functions.Notify(Lang:t('error.horse_brush_needed'), 'error')
-            end
-        else
-            RSGCore.Functions.Notify(Lang:t('error.not_horse_trainer'), 'error')
-        end
-    else
-        RSGCore.Functions.Notify(Lang:t('error.horse_too_clean'), 'error')
+RegisterNetEvent('rsg-horsetrainer:client:brushHorse', function(item)
+    playerjob = RSGCore.Functions.GetPlayerData().job.name
+
+    if playerjob ~= 'horsetrainer' then
+        RSGCore.Functions.Notify(Lang:t('error.not_horse_trainer'), 'error')
+        return
     end
+
+    horsePed = exports['rsg-horses']:CheckActiveHorse()
+    local ped = PlayerPedId()
+    local pCoords = GetEntityCoords(ped)
+    local cCoords = GetEntityCoords(horsePed)
+    local distance = #(pCoords - cCoords)
+    local hasItem = RSGCore.Functions.HasItem('horsetrainingbrush', 1)
+
+    if distance > 1.7 then
+        RSGCore.Functions.Notify(Lang:t('error.horse_too_far'), 'error')
+        return
+    end
+
+    if cleancooldownSecondsRemaining ~= 0 then
+        RSGCore.Functions.Notify(Lang:t('error.horse_too_clean'), 'error')
+        return
+    end
+
+    if not hasItem then
+        RSGCore.Functions.Notify(Lang:t('error.horse_brush_needed'), 'error')
+        return
+    end
+
+    -- horsePed = Citizen.InvokeNative(0xE7E11B8DCBED1058, PlayerPedId())
+    Citizen.InvokeNative(0xCD181A959CFDD7F4, PlayerPedId(), horsePed, `INTERACTION_BRUSH`, 0, 0)
+
+    Wait(8000)
+
+    Citizen.InvokeNative(0xE3144B932DFDFF65, horsePed, 0.0, -1, 1, 1)
+    ClearPedEnvDirt(horsePed)
+    ClearPedDamageDecalByZone(horsePed, 10, "ALL")
+    ClearPedBloodDamage(horsePed)
+
+    CleaningCooldown()
+
+    CheckEXP()
+
+    if horseEXP >= 5000 then
+        maxedEXP = true
+    end
+
+    if maxedEXP then return end
+
+    PlaySoundFrontend("Core_Fill_Up", "Consumption_Sounds", true, 0)
+    TriggerServerEvent('rsg-horsetrainer:server:updatexp', 'cleaning')
 end)
 
 -------------------------------------------------------------------------------
 
 -- feed horse for xp
 RegisterNetEvent('rsg-horsetrainer:client:feedHorse',function(item)
-    local playerjob = RSGCore.Functions.GetPlayerData().job.name
-    if feedcooldownSecondsRemaining == 0 then
-        if playerjob == 'horsetrainer' then
-            local hasItem = RSGCore.Functions.HasItem(item, 1)
-            if hasItem then
-                local horsePed = Citizen.InvokeNative(0xE7E11B8DCBED1058, PlayerPedId())
-                Citizen.InvokeNative(0xCD181A959CFDD7F4, PlayerPedId(), horsePed, -224471938, 0, 0)
-                Wait(5000)
-                TriggerServerEvent('rsg-horsetrainer:server:updatexp', 'feeding')
-                TriggerServerEvent('rsg-horsetrainer:server:deleteItem', item, 1)
-                handlefeedCooldown()
-            else
-                RSGCore.Functions.Notify(Lang:t('error.carrot_needed'), 'error')
-            end
-        else
-            RSGCore.Functions.Notify(Lang:t('error.not_horse_trainer'), 'error')
-        end
-    else
-        RSGCore.Functions.Notify(Lang:t('error.horse_too_full'), 'error')
+    playerjob = RSGCore.Functions.GetPlayerData().job.name
+
+    if playerjob ~= 'horsetrainer' then
+        RSGCore.Functions.Notify(Lang:t('error.not_horse_trainer'), 'error')
+        return
     end
+
+    horsePed = exports['rsg-horses']:CheckActiveHorse()
+    local ped = PlayerPedId()
+    local pCoords = GetEntityCoords(ped)
+    local cCoords = GetEntityCoords(horsePed)
+    local distance = #(pCoords - cCoords)
+    local hasItem = RSGCore.Functions.HasItem('horsetrainingcarrot', 1)
+
+    if distance > 1.7 then
+        RSGCore.Functions.Notify(Lang:t('error.horse_too_far'), 'error')
+        return
+    end
+
+    if feedcooldownSecondsRemaining ~= 0 then
+        RSGCore.Functions.Notify(Lang:t('error.horse_too_full'), 'error')
+        return
+    end
+
+    if not hasItem then
+        RSGCore.Functions.Notify(Lang:t('error.carrot_needed'), 'error')
+        return
+    end
+
+    -- horsePed = Citizen.InvokeNative(0xE7E11B8DCBED1058, PlayerPedId())
+    Citizen.InvokeNative(0xCD181A959CFDD7F4, PlayerPedId(), horsePed, -224471938, 0, 0)
+
+    FeedingCooldown()
+
+    CheckEXP()
+
+
+    if horseEXP >= 5000 then
+        maxedEXP = true
+    end
+
+    Wait(5000)
+
+    TriggerServerEvent('rsg-horsetrainer:server:updatexp', 'feeding')
+    TriggerServerEvent('rsg-horsetrainer:server:deleteItem', item, 1)
 end)
 
 -------------------------------------------------------------------------------
 
 RegisterNetEvent('rsg-horsetrainer:client:OpenTrainerShop')
 AddEventHandler('rsg-horsetrainer:client:OpenTrainerShop', function()
-    local playerjob = RSGCore.Functions.GetPlayerData().job.name
-    if playerjob == 'horsetrainer' then
-        local ShopItems = {}
-        ShopItems.label = "Horse Trainer Shop"
-        ShopItems.items = Config.TrainerShop
-        ShopItems.slots = #Config.TrainerShop
-        TriggerServerEvent("inventory:server:OpenInventory", "shop", "TrainerShop_"..math.random(1, 99), ShopItems)
-    else
+    playerjob = RSGCore.Functions.GetPlayerData().job.name
+
+    if playerjob ~= 'horsetrainer' then
         RSGCore.Functions.Notify(Lang:t('error.not_horse_trainer'), 'error')
+        return
     end
+
+    local ShopItems = {}
+
+    ShopItems.label = "Horse Trainer Shop"
+    ShopItems.items = Config.TrainerShop
+    ShopItems.slots = #Config.TrainerShop
+    TriggerServerEvent("inventory:server:OpenInventory", "shop", "TrainerShop_"..math.random(1, 99), ShopItems)
 end)
 
 -------------------------------------------------------------------------------
+
+-- Check horse EXP
+RegisterNetEvent('rsg-horsetrainer:client:checkHorseEXP')
+AddEventHandler('rsg-horsetrainer:client:checkHorseEXP', function()
+    RSGCore.Functions.TriggerCallback('rsg-horses:server:GetActiveHorse', function(data)
+        if (data) then
+            horsePed = exports['rsg-horses']:CheckActiveHorse()
+            local ped = PlayerPedId()
+            local pCoords = GetEntityCoords(ped)
+            local cCoords = GetEntityCoords(horsePed)
+            local distance = #(pCoords - cCoords)
+
+            horseName = data.name
+            horseEXP = data.horsexp
+            -- horsePed = Citizen.InvokeNative(0xE7E11B8DCBED1058, PlayerPedId())
+
+            local bondingLevel = exports['rsg-horses']:CheckHorseBondingLevel()
+            local msg = "Horse Name: ~e~"..horseName.."~q~ | Horse EXP: ~e~"..horseEXP.."~q~ | Horse Bonding Level: ~e~"..bondingLevel.."~q~"
+
+            if distance > 1.7 then
+                RSGCore.Functions.Notify(Lang:t('error.horse_too_far'), 'error')
+                return
+            end
+
+            NotificationSound(msg)
+        end
+    end)
+end)
+
+function NotificationSound(msg)
+    local str = Citizen.InvokeNative(0xFA925AC00EB830B9, 10, "LITERAL_STRING", msg, Citizen.ResultAsLong())
+
+    Citizen.InvokeNative(0xFA233F8FE190514C, str)
+    Citizen.InvokeNative(0xE9990552DEC71600)
+end
