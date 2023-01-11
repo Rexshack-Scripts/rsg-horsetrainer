@@ -84,6 +84,8 @@ CreateThread(function()
         if walking and leading then
             Wait(Config.LeadingXpTime)
             TriggerServerEvent('rsg-horsetrainer:server:updatexp', 'leading')
+            walking = false
+            leading = false
         end
 
         ::continue::
