@@ -4,6 +4,8 @@ Config.Debug = false
 
 -- settings
 ------------------------------------------------------------------------------------
+Config.TrainingEXPNotification = true -- show notification regarding Horse's EXP
+------------------------------------------------------------------------------------
 Config.FullyTrained = 5000 -- anything above 100 is overpower stamina and health
 ------------------------------------------------------------------------------------
 Config.LeadingXpTime = 10000 -- in millisectonds (10000 = 10 secs / 60000 = 1 min)
