@@ -312,8 +312,9 @@ AddEventHandler('rsg-horsetrainer:client:checkHorseEXP', function()
             horseEXP = data.horsexp
             -- horsePed = Citizen.InvokeNative(0xE7E11B8DCBED1058, PlayerPedId())
 
+            local level = exports['rsg-horses']:CheckHorseLevel()
             local bondingLevel = exports['rsg-horses']:CheckHorseBondingLevel()
-            local msg = "Horse Name: ~e~"..horseName.."~q~ | Horse EXP: ~e~"..horseEXP.."~q~ | Horse Bonding Level: ~e~"..bondingLevel.."~q~"
+            local msg = "Name: ~e~"..horseName.."~q~ | EXP: ~e~"..horseEXP.."~q~ | Level: ~e~"..level.."~q~ | Bonding Level: ~e~"..bondingLevel.."~q~"
 
             if distance > 1.7 then
                 RSGCore.Functions.Notify(Lang:t('error.horse_too_far'), 'error')
