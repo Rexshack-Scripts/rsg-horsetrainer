@@ -103,12 +103,16 @@ RegisterNetEvent('rsg-horsetrainer:client:brushHorse', function(item)
         return
     end
 
+    if item ~= 'horsetrainingbrush' then
+        item = 'horsetrainingbrush'
+    end
+
     horsePed = exports['rsg-horses']:CheckActiveHorse()
     local ped = PlayerPedId()
     local pCoords = GetEntityCoords(ped)
     local cCoords = GetEntityCoords(horsePed)
     local distance = #(pCoords - cCoords)
-    local hasItem = RSGCore.Functions.HasItem('horsetrainingbrush', 1)
+    local hasItem = RSGCore.Functions.HasItem(item, 1)
 
     if distance > 1.7 then
         RSGCore.Functions.Notify(Lang:t('error.horse_too_far'), 'error')
@@ -160,12 +164,16 @@ RegisterNetEvent('rsg-horsetrainer:client:feedHorse',function(item)
         return
     end
 
+    if item ~= 'horsetrainingcarrot' then
+        item = 'horsetrainingcarrot'
+    end
+
     horsePed = exports['rsg-horses']:CheckActiveHorse()
     local ped = PlayerPedId()
     local pCoords = GetEntityCoords(ped)
     local cCoords = GetEntityCoords(horsePed)
     local distance = #(pCoords - cCoords)
-    local hasItem = RSGCore.Functions.HasItem('horsetrainingcarrot', 1)
+    local hasItem = RSGCore.Functions.HasItem(item, 1)
 
     if distance > 1.7 then
         RSGCore.Functions.Notify(Lang:t('error.horse_too_far'), 'error')
