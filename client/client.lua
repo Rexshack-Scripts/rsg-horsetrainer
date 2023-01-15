@@ -8,6 +8,9 @@ local horseEXP = 0
 local maxedEXP = false
 local horsePed = 0
 local horseName = nil
+local horseTraining = false
+local htNotified = false
+local isRadialPressed = false
 
 -- Check horse EXP
 local function CheckEXP()
@@ -17,6 +20,34 @@ local function CheckEXP()
 
     maxedEXP = false
 end
+
+-- Horse Training On/Off
+RegisterNetEvent('rsg-horsetrainer:client:startTraining', function()
+    if isRadialPressed then return end
+
+    local ishorseTraining = not horseTraining
+
+    if ishorseTraining then
+        horseTraining = true
+        htNotified = true
+
+        RSGCore.Functions.Notify("Horse training started!", 'success', 3000)
+
+        isRadialPressed = true
+        Wait(8000)
+        isRadialPressed = false
+        return
+    end
+
+    horseTraining = false
+    htNotified = false
+
+    RSGCore.Functions.Notify("Horse training stopped!", 'error', 3000)
+
+    isRadialPressed = true
+    Wait(8000)
+    isRadialPressed = false
+end)
 
 -------------------------------------------------------------------------------
 
@@ -65,6 +96,9 @@ CreateThread(function()
 
         if playerjob ~= 'horsetrainer' then goto continue end
 
+        walking = false
+        leading = false
+
         if Citizen.InvokeNative(0xDE4C184B2B9B071A, PlayerPedId()) then -- walking
             walking = true
         end
@@ -81,11 +115,24 @@ CreateThread(function()
 
         if maxedEXP then goto continue end
 
+        if not leading then
+            if htNotified then
+                htNotified = false
+            end
+        end
+
         if walking and leading then
+            if not horseTraining then
+                if not htNotified then
+                    RSGCore.Functions.Notify('You\'re currently off duty, your horse won\'t get any EXP!', 'primary', 5000)
+                    htNotified = true
+                end
+
+                goto continue
+            end
+
             Wait(Config.LeadingXpTime)
             TriggerServerEvent('rsg-horsetrainer:server:updatexp', 'leading')
-            walking = false
-            leading = false
         end
 
         ::continue::
@@ -103,12 +150,16 @@ RegisterNetEvent('rsg-horsetrainer:client:brushHorse', function(item)
         return
     end
 
+    if item ~= 'horsetrainingbrush' then
+        item = 'horsetrainingbrush'
+    end
+
     horsePed = exports['rsg-horses']:CheckActiveHorse()
     local ped = PlayerPedId()
     local pCoords = GetEntityCoords(ped)
     local cCoords = GetEntityCoords(horsePed)
     local distance = #(pCoords - cCoords)
-    local hasItem = RSGCore.Functions.HasItem('horsetrainingbrush', 1)
+    local hasItem = RSGCore.Functions.HasItem(item, 1)
 
     if distance > 1.7 then
         RSGCore.Functions.Notify(Lang:t('error.horse_too_far'), 'error')
@@ -127,6 +178,15 @@ RegisterNetEvent('rsg-horsetrainer:client:brushHorse', function(item)
 
     -- horsePed = Citizen.InvokeNative(0xE7E11B8DCBED1058, PlayerPedId())
     Citizen.InvokeNative(0xCD181A959CFDD7F4, PlayerPedId(), horsePed, `INTERACTION_BRUSH`, 0, 0)
+
+    if not horseTraining then
+        if not htNotified then
+            RSGCore.Functions.Notify('You\'re currently off duty, your horse won\'t get any EXP!', 'primary', 5000)
+            htNotified = true
+        end
+
+        return
+    end
 
     Wait(8000)
 
@@ -160,12 +220,16 @@ RegisterNetEvent('rsg-horsetrainer:client:feedHorse',function(item)
         return
     end
 
+    if item ~= 'horsetrainingcarrot' then
+        item = 'horsetrainingcarrot'
+    end
+
     horsePed = exports['rsg-horses']:CheckActiveHorse()
     local ped = PlayerPedId()
     local pCoords = GetEntityCoords(ped)
     local cCoords = GetEntityCoords(horsePed)
     local distance = #(pCoords - cCoords)
-    local hasItem = RSGCore.Functions.HasItem('horsetrainingcarrot', 1)
+    local hasItem = RSGCore.Functions.HasItem(item, 1)
 
     if distance > 1.7 then
         RSGCore.Functions.Notify(Lang:t('error.horse_too_far'), 'error')
@@ -194,10 +258,22 @@ RegisterNetEvent('rsg-horsetrainer:client:feedHorse',function(item)
         maxedEXP = true
     end
 
+    TriggerServerEvent('rsg-horsetrainer:server:deleteItem', item, 1)
+
+    if maxedEXP then return end
+
+    if not horseTraining then
+        if not htNotified then
+            RSGCore.Functions.Notify('You\'re currently off duty, your horse won\'t get any EXP!', 'primary', 5000)
+            htNotified = true
+        end
+
+        return
+    end
+
     Wait(5000)
 
     TriggerServerEvent('rsg-horsetrainer:server:updatexp', 'feeding')
-    TriggerServerEvent('rsg-horsetrainer:server:deleteItem', item, 1)
 end)
 
 -------------------------------------------------------------------------------
@@ -236,8 +312,9 @@ AddEventHandler('rsg-horsetrainer:client:checkHorseEXP', function()
             horseEXP = data.horsexp
             -- horsePed = Citizen.InvokeNative(0xE7E11B8DCBED1058, PlayerPedId())
 
+            local level = exports['rsg-horses']:CheckHorseLevel()
             local bondingLevel = exports['rsg-horses']:CheckHorseBondingLevel()
-            local msg = "Horse Name: ~e~"..horseName.."~q~ | Horse EXP: ~e~"..horseEXP.."~q~ | Horse Bonding Level: ~e~"..bondingLevel.."~q~"
+            local msg = "Name: ~e~"..horseName.."~q~ | EXP: ~e~"..horseEXP.."~q~ | Level: ~e~"..level.."~q~ | Bonding Level: ~e~"..bondingLevel.."~q~"
 
             if distance > 1.7 then
                 RSGCore.Functions.Notify(Lang:t('error.horse_too_far'), 'error')
