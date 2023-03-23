@@ -23,4 +23,5 @@ Config.HorseFeedCooldown = 1 -- cooldown before feeding can take place again (in
 Config.TrainerShop = {
      [1] = { name = "horsetrainingbrush",  price = 10,   amount = 500,  info = {}, type = "item", slot = 1, },
      [2] = { name = "horsetrainingcarrot", price = 0.50, amount = 500,  info = {}, type = "item", slot = 2, },
+	 [3] = { name = "horsereviver",        price = 3,    amount = 500,  info = {}, type = "item", slot = 3, },
 }
