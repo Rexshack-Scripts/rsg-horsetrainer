@@ -90,11 +90,18 @@ CreateThread(function()
     while true do
         Wait(1000)
 
+        local ped = PlayerPedId()
+        local mount = GetMount(ped)
+
         if not LocalPlayer.state.isLoggedIn then goto continue end
 
         playerjob = RSGCore.Functions.GetPlayerData().job.name
 
         if playerjob ~= 'horsetrainer' then goto continue end
+
+        horsePed = exports['rsg-horses']:CheckActiveHorse()
+
+        if mount ~= horsePed then goto continue end
 
         walking = false
         leading = false
