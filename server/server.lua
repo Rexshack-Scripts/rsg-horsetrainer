@@ -39,10 +39,6 @@ RegisterNetEvent('rsg-horsetrainer:server:updatexp',function(action)
         horsename = result[1].name
         horseid = result[1].horseid
         horsexp = result[1].horsexp
-
-        print(result[1].name)
-        print(result[1].horseid)
-        print(result[1].horsexp)
     end
 
     if action == 'riding' and horsexp <= Config.FullyTrained then
