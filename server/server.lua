@@ -27,17 +27,30 @@ RegisterNetEvent('rsg-horsetrainer:server:updatexp',function(action)
     local src = source
     local Player = RSGCore.Functions.GetPlayer(src)
     local cid = Player.PlayerData.citizenid
+    local expRiding = Config.RidingXpIncreaseTrainer
 
-    local result = MySQL.query.await('SELECT * FROM player_horses WHERE citizenid=@citizenid AND active=@active',
+    local result = MySQL.query.await('SELECT * FROM player_horses WHERE citizenid = @citizenid AND active = @active',
     {
         ['@citizenid'] = cid,
         ['@active'] = 1
     })
 
-    if (result[1] ~= nil) then
-        horsename = (result[1].name)
-        horseid = (result[1].horseid)
-        horsexp = (result[1].horsexp)
+    if result[1] then
+        horsename = result[1].name
+        horseid = result[1].horseid
+        horsexp = result[1].horsexp
+
+        print(result[1].name)
+        print(result[1].horseid)
+        print(result[1].horsexp)
+    end
+
+    if action == 'riding' and horsexp <= Config.FullyTrained then
+        newxp = horsexp + expRiding
+
+        MySQL.update('UPDATE player_horses SET horsexp = ? WHERE horseid = ? AND active = ?', {newxp, horseid, 1})
+
+        return
     end
 
     if action == 'leading' and horsexp <= Config.FullyTrained then
