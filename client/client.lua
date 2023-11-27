@@ -413,6 +413,40 @@ end)
 
 -------------------------------------------------------------------------------
 
+RegisterNetEvent('rsg-horsetrainer:client:tokenupdatexp', function(item)
+
+    local horsePed = exports['rsg-horses']:CheckActiveHorse()
+    
+    if horsePed ~= 0 then
+    
+        if item == 'horsexp5' then
+            TriggerServerEvent('rsg-horsetrainer:server:tokenupdatexp', 5)
+        end
+        
+        if item == 'horsexp10' then
+            TriggerServerEvent('rsg-horsetrainer:server:tokenupdatexp', 10)
+        end
+        
+        if item == 'horsexp25' then
+            TriggerServerEvent('rsg-horsetrainer:server:tokenupdatexp', 25)
+        end
+        
+        if item == 'horsexp50' then
+            TriggerServerEvent('rsg-horsetrainer:server:tokenupdatexp', 50)
+        end
+        
+        if item == 'horsexp100' then
+            TriggerServerEvent('rsg-horsetrainer:server:tokenupdatexp', 100)
+        end
+        
+    else
+        lib.notify({ title = 'No Active Horse!', description = 'you do not have an active horse', type = 'error' })
+    end
+    
+end)
+
+-------------------------------------------------------------------------------
+
 -- Check horse EXP
 RegisterNetEvent('rsg-horsetrainer:client:checkHorseEXP')
 AddEventHandler('rsg-horsetrainer:client:checkHorseEXP', function()
