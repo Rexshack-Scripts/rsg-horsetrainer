@@ -97,7 +97,7 @@ CreateThread(function()
         Wait(1000)
 
         local ped = PlayerPedId()
-        local mount = GetMount(ped)
+        local mount = Citizen.InvokeNative(0x4C8B59171957BCF7, ped) -- GetLastMount
 
         if not LocalPlayer.state.isLoggedIn then goto continue end
 
